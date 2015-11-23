@@ -67,6 +67,8 @@ function Install-WindowsUpdates() {
             [bool]$addThisUpdate = $false
             if ($Update.InstallationBehavior.CanRequestUserInput) {
                 LogWrite "> Skipping: $($Update.Title) because it requires user input"
+           # } elseif ( $Update.Identity.UpdateID -eq "5da03162-868e-4567-80a2-d046b3fb1b09" ) {
+           #     LogWrite "> Skipping: $($Update.Title) because its a problem child"
             } else {
                 if (!($Update.EulaAccepted)) {
                     LogWrite "> Note: $($Update.Title) has a license agreement that must be accepted. Accepting the license."
@@ -154,8 +156,8 @@ function Install-WindowsUpdates() {
             Title = $UpdatesToInstall.Item($i).Title
             Result = $InstallationResult.GetUpdateResult($i).ResultCode
         }
-        LogWrite "Item: " $UpdatesToInstall.Item($i).Title
-        LogWrite "Result: " $InstallationResult.GetUpdateResult($i).ResultCode;
+        LogWrite "Item: $($UpdatesToInstall.Item($i).Title)"
+        LogWrite "Result: $($InstallationResult.GetUpdateResult($i).ResultCode)"
     }
 
     Check-ContinueRestartOrEnd
@@ -178,7 +180,7 @@ function Check-WindowsUpdates() {
     $script:maxAttempts = 12
     while(-not $script:successful -and $script:attempts -lt $script:maxAttempts) {
         try {
-            $script:SearchResult = $script:UpdateSearcher.Search("IsInstalled=0 and Type='Software' and IsHidden=0")
+            $script:SearchResult = $script:UpdateSearcher.Search("IsInstalled=0 and Type='Software' and IsHidden=0 and UpdateID!='5da03162-868e-4567-80a2-d046b3fb1b09'")
             $script:successful = $TRUE
         } catch {
             LogWrite $_.Exception | Format-List -force
@@ -193,11 +195,13 @@ function Check-WindowsUpdates() {
         LogWrite $Message
         try {
             for($i=0; $i -lt $script:SearchResult.Updates.Count; $i++) {
-              LogWrite $script:SearchResult.Updates.Item($i).Title
-              LogWrite $script:SearchResult.Updates.Item($i).Description
-              LogWrite $script:SearchResult.Updates.Item($i).RebootRequired
-              LogWrite $script:SearchResult.Updates.Item($i).EulaAccepted
-          }
+              LogWrite "Title: $($script:SearchResult.Updates.Item($i).Title)"
+              LogWrite "Description: $($script:SearchResult.Updates.Item($i).Description)"
+              LogWrite "Reboot Required: $($script:SearchResult.Updates.Item($i).RebootRequired)"
+              LogWrite "EULA Accepted: $($script:SearchResult.Updates.Item($i).EulaAccepted)"
+              LogWrite "UpdateID: $($script:SearchResult.Updates.Item($i).Identity.UpdateID)"
+              LogWrite "---"
+            }
             $global:MoreUpdates=1
         } catch {
             LogWrite $_.Exception | Format-List -force
